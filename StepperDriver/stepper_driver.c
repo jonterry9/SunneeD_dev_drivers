@@ -9,8 +9,8 @@ int orientation_file, cur_orientation;
 
 void sig_handler(int signo)
 {
-    if (ftruncate(orientation_file, 0) != 0) {
-        fprintf(stderr, "ERR: truncate fail\n");
+    if (lseek(orientation_file, 0, SEEK_SET) != 0) {
+        fprintf(stderr, "ERR: lseek fail\n");
         exit(1);
     }
     if (write(orientation_file, &cur_orientation, sizeof(cur_orientation)) == -1) {
@@ -21,8 +21,15 @@ void sig_handler(int signo)
     exit(0);
 }
 
+void flush_pipe(int fd)
+{
+    char buf[16];
+    while(read(fd, &buf, sizeof(buf)) != 0);
+}
+
 int main(void)
 {
+    unsigned char byte_1, byte_2;
     int fifo_fd, position, last_read, dif, dif2, ret;
     const char *path = "/dev/stepper";
     static char *orientation_path = "orientation_rec.bin";
@@ -56,27 +63,42 @@ int main(void)
         }
     }   
     while (1) {
-        if (read(fifo_fd, &position, sizeof(int)) != 0) {
-            if (position >= 0 && position <= 360 && position != last_read) { /* check for position validity & pointless calls (dont move motor)*/
+        if (read(fifo_fd, &byte_1, 1) != 0) {
+            if (byte_1 != '+' && byte_1 != '-') {
+                if (read(fifo_fd, &byte_2, 1) != 0) {
+                    position = (byte_2 << 8) | byte_1;
+                    if (position >= 0 && position <= 360 && position != last_read) { /* check for position validity & pointless calls (dont move motor)*/
 
-                dif = cur_orientation - position;
-                dif2 = 360 - abs(dif);
-                cur_orientation = position;
-                if (dif < 0) {
-                        if (dif2 < abs(dif)) {
-                                rot_n_deg(dif2, 0);
+                        dif = cur_orientation - position;
+                        dif2 = 360 - abs(dif);
+                        cur_orientation = position;
+                        if (dif < 0) {
+                                if (dif2 < abs(dif)) {
+                                        rot_n_deg(dif2, 0);
+                                } else {
+                                        rot_n_deg(abs(dif), 1);
+                                }
                         } else {
-                                rot_n_deg(abs(dif), 1);
+                                if (dif2 < dif) {
+                                        rot_n_deg(dif2, 1);
+                                } else {
+                                        rot_n_deg(dif, 0);
+                                }
                         }
-                } else {
-                        if (dif2 < dif) {
-                                rot_n_deg(dif2, 1);
-                        } else {
-                                rot_n_deg(dif, 0);
-                        }
+                        last_read = position;
+                    }
                 }
-                last_read = position;
+            } else {
+                read(fifo_fd, &position, sizeof(int));
+                if (position >= 0 && position <= 360) {
+                    if (byte_1 == '+') {
+                        rot_n_deg(position, 1);
+                    } else {
+                        rot_n_deg(position, 0);
+                    }
+                }
             }
+            flush_pipe(fifo_fd);
         }
     }
     exit(1); /* should never be reached */
