@@ -21,16 +21,10 @@ void sig_handler(int signo)
     exit(0);
 }
 
-void flush_pipe(int fd)
-{
-    char buf[16];
-    while(read(fd, &buf, sizeof(buf)) != 0);
-}
-
 int main(void)
 {
-    unsigned char byte_1, byte_2;
-    int fifo_fd, position, last_read, dif, dif2, ret;
+    unsigned char byte_1;
+    int fifo_fd, position, last_read, dif, dif2, ret, byte_2;
     const char *path = "/dev/stepper";
     static char *orientation_path = "orientation_rec.bin";
     last_read = ret = -1;
@@ -65,7 +59,7 @@ int main(void)
     while (1) {
         if (read(fifo_fd, &byte_1, 1) != 0) {
             if (byte_1 != '+' && byte_1 != '-') {
-                if (read(fifo_fd, &byte_2, 1) != 0) {
+                if (read(fifo_fd, &byte_2, sizeof(byte_2))) != 0) {
                     position = (byte_2 << 8) | byte_1;
                     if (position >= 0 && position <= 360 && position != last_read) { /* check for position validity & pointless calls (dont move motor)*/
 
@@ -98,7 +92,6 @@ int main(void)
                     }
                 }
             }
-            flush_pipe(fifo_fd);
         }
     }
     exit(1); /* should never be reached */
