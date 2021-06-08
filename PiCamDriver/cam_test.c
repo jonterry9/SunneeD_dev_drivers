@@ -36,6 +36,19 @@ int main(void)
         exit(1);
     }
     printf("wrote '1'(stop_preview())\n");
+
+    data = "4, test_rec, format=mjpeg\n";
+    if (write(cam_fifo, data, strlen(data)) <= 0) {
+        fprintf(stderr, "ERR: could not write to FIFO\n");
+        exit(1);
+    }
+
+    data = "5\n";
+     if (write(cam_fifo, data, strlen(data)) <= 0) {
+        fprintf(stderr, "ERR: could not write to FIFO\n");
+        exit(1);
+    }
+
     close(cam_fifo);
     return 0;
 }
