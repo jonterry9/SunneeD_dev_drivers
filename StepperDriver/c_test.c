@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if ((stepper_fd = open("/dev/stepper", O_WRONLY)) == -1) {
+    if ((stepper_fd = open("/tmp/stepper", O_WRONLY)) == -1) {
         printf("err\n");
         exit(1);
     }

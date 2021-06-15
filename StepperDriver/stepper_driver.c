@@ -25,7 +25,7 @@ int main(void)
 {
     unsigned char byte_1;
     int fifo_fd, position, last_read, dif, dif2, ret, byte_2;
-    const char *path = "/dev/stepper";
+    const char *path = "/tmp/stepper";
     static char *orientation_path = "orientation_rec.bin";
     last_read = ret = -1;
     cur_orientation = 0;
