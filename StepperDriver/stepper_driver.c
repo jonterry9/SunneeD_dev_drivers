@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
+#include <string.h>
 #include "lib_ULN2003_stepper.h"
 
 int orientation_file, cur_orientation;
@@ -26,7 +28,7 @@ int main(void)
     unsigned char byte_1;
     int fifo_fd, position, last_read, dif, dif2, ret, byte_2;
     const char *path = "/tmp/stepper";
-    static char *orientation_path = "orientation_rec.bin";
+    static char *orientation_path = "/tmp/orientation_rec.bin";
     last_read = ret = -1;
     cur_orientation = 0;
 
@@ -37,7 +39,7 @@ int main(void)
 
     if ((orientation_file = open(orientation_path,O_RDWR)) == -1) {
         if ((orientation_file = open(orientation_path, O_CREAT | O_RDWR, S_IRWXU | S_IWOTH)) == -1) {
-            fprintf(stderr, "ERR: stepper lib can't create file\n");
+            fprintf(stderr, "ERR: stepper lib can't create file -- %s\n", strerror(errno));
             exit(1);
         }
     } else if (read(orientation_file, &cur_orientation, 2) == 0) {
