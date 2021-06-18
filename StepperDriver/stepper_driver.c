@@ -25,11 +25,7 @@ void sig_handler(int signo)
 
 int main(void) {
     unsigned char byte_1;
-<<<<<<< HEAD
-    int fifo_fd, position, last_read, dif, dif2, ret, byte_2, sunneed_pipe_handler_pid;
-=======
     int fifo_fd, position, last_read, dif, dif2, ret, byte_2;
->>>>>>> 113614f588fa9622fdf9b0792177f4b8df9ec2f2
     const char *path = "/tmp/stepper";
     static char *orientation_path = "/tmp/orientation_rec.bin";
     last_read = ret = -1;
@@ -41,13 +37,8 @@ int main(void) {
     }
 
     if ((orientation_file = open(orientation_path,O_RDWR)) == -1) {
-<<<<<<< HEAD
         if ((orientation_file = open(orientation_path, O_CREAT | O_RDWR)) == -1) {
             fprintf(stderr, "ERR: stepper lib can't create file -- %s\n",strerror(errno));
-=======
-        if ((orientation_file = open(orientation_path, O_CREAT | O_RDWR, S_IRWXU | S_IWOTH)) == -1) {
-            fprintf(stderr, "ERR: stepper lib can't create file -- %s\n", strerror(errno));
->>>>>>> 113614f588fa9622fdf9b0792177f4b8df9ec2f2
             exit(1);
         }
     } else if (read(orientation_file, &cur_orientation, 2) == 0) {
