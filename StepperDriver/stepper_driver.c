@@ -25,7 +25,8 @@ void sig_handler(int signo)
 
 int main(void) {
     unsigned char byte_1;
-    int fifo_fd, position, last_read, dif, dif2, ret, byte_2;
+    int fifo_fd, position, rot_degs, last_read, dif, dif2, ret, byte_2;
+    char rot_degs_bytes[2];
     const char *path = "/tmp/stepper";
     static char *orientation_path = "/tmp/orientation_rec.bin";
     last_read = ret = -1;
@@ -49,13 +50,7 @@ int main(void) {
     while (1) {
         if (read(0, &byte_1, 1) != 0) {
             if (byte_1 != '+' && byte_1 != '-') {
-		if (byte_1 == 'o') {
-   		    if (write(1, &cur_orientation, sizeof(cur_orientation)) <= 0) {
-		        fprintf(stderr, "ERR: write to sunneed data pipe failed\n");
-		        exit(1);
-		    }
-		    continue;
-		} else if (read(0, &byte_2, 3) != 0) {
+		if (read(0, &byte_2, 3) != 0) {
     		        position = (byte_2 << 8) | byte_1;
 		    if (position >= 0 && position <= 360 && position != last_read) { /* check for position validity & pointless calls (dont move motor)*/
                         dif = cur_orientation - position;
@@ -77,16 +72,25 @@ int main(void) {
                         last_read = position;
                     }
                 }
-            } else if (byte_1 != 'o'){
-                read(0, &position, sizeof(int));
-                if (position >= 0 && position <= 360) {
+            } else {
+		 read(0, &rot_degs_bytes, 2);   
+               // read(0, &position, sizeof(int));
+		rot_degs = atoi(rot_degs_bytes);
+                if (rot_degs > 0 && rot_degs < 360) {
                     if (byte_1 == '+') {
-                        rot_n_deg(position, 1);
+		fprintf(stderr, "rotating %d degs\n", rot_degs);
+                        position += rot_degs;
+			rot_n_deg(rot_degs, 1);
                     } else {
-                        rot_n_deg(position, 0);
+			position -= rot_degs;
+                        rot_n_deg(rot_degs, 0);
                     }
                 }
             }
+	    fprintf(stderr, "%d\n", position);
+	    fprintf(stderr, "done\n");
+	    char sig_char = 'a';
+	    write(1, &sig_char, 1); /* let sunneed know we're done (in case we're recording pwr used per call */
 	}  
     }
     exit(1); /* should never be reached */
