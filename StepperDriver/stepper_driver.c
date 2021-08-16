@@ -50,9 +50,9 @@ int main(void) {
     while (1) {
         if (read(0, &byte_1, 1) != 0) {
             if (byte_1 != '+' && byte_1 != '-') {
-		if (read(0, &byte_2, 3) != 0) {
+		        if (read(0, &byte_2, 3) != 0) {
     		        position = (byte_2 << 8) | byte_1;
-		    if (position >= 0 && position <= 360 && position != last_read) { /* check for position validity & pointless calls (dont move motor)*/
+		            if (position >= 0 && position <= 360 && position != last_read) { /* check for position validity & pointless calls (dont move motor)*/
                         dif = cur_orientation - position;
                         dif2 = 360 - abs(dif);
                         cur_orientation = position;
@@ -73,25 +73,28 @@ int main(void) {
                     }
                 }
             } else {
-		 read(0, &rot_degs_bytes, 2);   
-               // read(0, &position, sizeof(int));
-		rot_degs = atoi(rot_degs_bytes);
+		        read(0, &rot_degs_bytes, 3);   
+               	fprintf(stderr, "%d\n",atoi(rot_degs_bytes));
+        		rot_degs = atoi(rot_degs_bytes);
                 if (rot_degs > 0 && rot_degs < 360) {
                     if (byte_1 == '+') {
-		fprintf(stderr, "rotating %d degs\n", rot_degs);
+		                fprintf(stderr, "rotating %d degs\n", rot_degs);
                         position += rot_degs;
-			rot_n_deg(rot_degs, 1);
+			            position = position % 360;
+			            rot_n_deg(rot_degs, 1);
                     } else {
-			position -= rot_degs;
+			            position -= rot_degs;
+			            if (position < 0) {
+			                position = 360 - position;
+			            }
                         rot_n_deg(rot_degs, 0);
                     }
                 }
             }
-	    fprintf(stderr, "%d\n", position);
-	    fprintf(stderr, "done\n");
-	    char sig_char = 'a';
-	    write(1, &sig_char, 1); /* let sunneed know we're done (in case we're recording pwr used per call */
-	}  
+
+	        char sig_char = 'a';
+	        write(1, &sig_char, 1); /* let sunneed know we're done (in case we're recording pwr used per call */
+	    }  
     }
     exit(1); /* should never be reached */
 }
